@@ -3,6 +3,8 @@
 $program = ""
 ### URL, UNC, or Local Path to EXE, MSI, MSIX, or ZIP ###
 $downloadPath = ""
+#### If ZIP, Must Specify Name of Sub-Folder\File After Extraction (Primary folder not required) ###
+$nestedInstallerFolderAndFile = ""
 #### Specify Arguments ###
 $arguments = ""
 #### Specify File to Check if Installed ###
