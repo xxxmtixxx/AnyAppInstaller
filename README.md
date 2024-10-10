@@ -30,7 +30,7 @@
 
 3. **Nested Installer Path** (Optional for ZIPs): If the main installer is a ZIP file, specify the relative path of the installer inside the extracted folder.
     ```powershell
-    $nestedInstallerFolderAndFile = "7Zip\Setup.exe"
+    $nestedInstallerFolderAndFile = ""
     ```
 
 4. **Installation Arguments**: Define any arguments to run the installer silently or with specific options.
@@ -75,7 +75,7 @@
 ### Modify these Variables ###
 $program = "7Zip"
 $downloadPath = "https://www.7-zip.org/a/7z2408-x64.exe"
-$nestedInstallerFolderAndFile = "7Zip\Setup.exe" # If using ZIP, else leave empty
+$nestedInstallerFolderAndFile = "" # If using ZIP, else leave empty
 $arguments = "/S"
 $fileToCheck = "C:\Program Files\7-Zip\7z.exe"
 $allowUpdate = $false
