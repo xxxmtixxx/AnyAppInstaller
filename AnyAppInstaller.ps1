@@ -1,8 +1,8 @@
 ### Modify these Variables ###
 ### Program Name ###
 $program = ""
-### URL to EXE, MSI, MSIX, or ZIP ###
-$urlPath = ""
+### URL, UNC, or Local Path to EXE, MSI, MSIX, or ZIP ###
+$downloadPath = ""
 #### If ZIP, Must Specify Name of Sub-Folder\File After Extraction (Primary folder not required) ###
 $nestedInstallerFolderAndFile = ""
 #### Specify Arguments ###
@@ -11,89 +11,127 @@ $arguments = ""
 $fileToCheck = ""
 
 ### Static Variables ###
-if ($urlPath -match "sharepoint") { # Check if URL contains "sharepoint" and append "download=1" if true
-    $urlPath = "$urlPath&download=1"
-}
-$head = Invoke-WebRequest -UseBasicParsing -Method Head $urlPath # Gets URL Header Info
-$downloadFileName = $head.BaseResponse.ResponseUri.Segments[-1] # Extracts File Name from Header
-$downloadPath = "C:\Temp" # Local Temp Folder
-$installer = "$downloadPath\$downloadFileName" # Local Installer Path
-$extension = [IO.Path]::GetExtension($downloadFileName) # Get File Extension
-$fileNamePrefix = [IO.Path]::GetFileNameWithoutExtension($downloadFileName) # Get File Name without Extension
-$extractedPath = "$downloadPath\$fileNamePrefix" # Extracted ZIP Path
-$nestedExtension = [IO.Path]::GetExtension($nestedInstallerFolderAndFile) # Get Nested File Extension
-$nestedInstaller = "$extractedPath\$nestedInstallerFolderAndFile" # Get Nested File Name without Extension
+$global:installer = ""
+$global:extension = ""
+$global:fileNamePrefix = ""
+$global:extractedPath = ""
 
-function Cleanup($installer, $extractedPath) {
-    Write-Output "Starting Cleanup."
-    Start-Sleep -Seconds 5 # Give Time for Installer to Close
-    Remove-Item -Path $installer -Force # Delete Installer
-    if (Test-Path $extractedPath) { # Check for Extracted Folder
-        Remove-Item -Path $extractedPath -Recurse -Force # Delete Extracted Folder
+# Function to check path type and prepare installer accordingly
+function PrepareInstallerPath($path) {
+    Write-Output "Preparing installer path for: $path"
+    if ($path -match "^https?://") {
+        Write-Output "URL detected."
+        $downloadFileName = [System.IO.Path]::GetFileName($path)  # Get filename from the URL
+        $global:installer = "C:\Temp\$downloadFileName"
+        $global:extension = [IO.Path]::GetExtension($downloadFileName)
+        $global:fileNamePrefix = [IO.Path]::GetFileNameWithoutExtension($downloadFileName)
+        $global:extractedPath = "C:\Temp\$fileNamePrefix"
+        
+        if (!(Test-Path $global:installer)) {
+            Write-Output "Downloading from URL: $path"
+            Invoke-WebRequest -Uri $path -OutFile $global:installer
+            Write-Output "Downloaded file to: $global:installer"
+        }
+    } elseif ($path -match "^\\\\") {
+        Write-Output "UNC path detected."
+        $downloadFileName = [IO.Path]::GetFileName($path)
+        $global:installer = "C:\Temp\$downloadFileName"
+        $global:extension = [IO.Path]::GetExtension($downloadFileName)
+        $global:fileNamePrefix = [IO.Path]::GetFileNameWithoutExtension($downloadFileName)
+        $global:extractedPath = "C:\Temp\$fileNamePrefix"
+        
+        if (!(Test-Path $global:installer)) {
+            Write-Output "Copying installer from UNC path."
+            Copy-Item -Path $path -Destination $global:installer
+        }
+    } elseif (Test-Path $path) {
+        Write-Output "Local path detected."
+        $global:installer = $path
+        $global:extension = [IO.Path]::GetExtension($global:installer)
+        $global:fileNamePrefix = [IO.Path]::GetFileNameWithoutExtension($global:installer)
+        $global:extractedPath = "C:\Temp\$fileNamePrefix"
+        Write-Output "Installer path set to: $global:installer"
+    } else {
+        throw "Invalid path: $path"
     }
-        Write-Output "Finished Cleanup."
-}
-
-### Create Local Temp Folder ###
-if (!(Test-Path $downloadPath)) { # Check for Temp Folder
-[void](New-Item -ItemType Directory -Force -Path $downloadPath) # Create Temp Folder
-Write-Output "Temp folder created."
 }
 
 ### Install Application ###
-if (!(Test-Path $fileToCheck)) { # Check if application is installed
-    ### Download from Web if the installer does not exist locally ###
-    if (!(Test-Path $installer)) { # Check if the installer file exists
-        Write-Output "Downloading installer."
-        $ProgressPreference = 'SilentlyContinue' # Disable Download Status Bar
-        Invoke-WebRequest -Uri $urlPath -OutFile $installer # Download File from Web
+if (!(Test-Path $fileToCheck)) { # Check if application is already installed
+    Write-Output "$program is not installed. Preparing to download and install."
+
+    # Prepare installer based on path type
+    PrepareInstallerPath $downloadPath
+
+    # Ensure installer is set properly
+    if (-not $global:installer) {
+        throw "Installer path is not set. Please check the path provided."
     }
+
     try {
-        if ($extension -eq ".exe") { # Check if EXE
-            Write-Output "Running installer as EXE."
-            Start-Process -FilePath $installer -ArgumentList $arguments -Verb RunAs -Wait # Install EXE
-        } elseif ($extension -eq ".msi") { # Check if MSI
-            Write-Output "Running installer as MSI."
-            Start-Process msiexec.exe -ArgumentList "/I ""$installer"" $arguments" -Verb RunAs -Wait # Install MSI
-        } elseif ($extension -eq ".msix") { # Check if MSIX
-            Write-Output "Running installer as MSIX."
-            Add-AppPackage -Path $installer # Install MSIX
-        } elseif ($extension -eq ".zip") { # Check if ZIP
-            Write-Output "Extracting ZIP."
-            Expand-Archive -LiteralPath $installer -DestinationPath $extractedPath -Force # Extract ZIP
-            if (Test-Path $extractedPath) { # Check for Extracted Folder
-                if ($nestedExtension -eq ".exe") { # Check if EXE
-                    Write-Output "Running installer as EXE."
-                    Start-Process -FilePath $nestedInstaller -ArgumentList $arguments -Verb RunAs -Wait # Install EXE
-                } elseif ($nestedExtension -eq ".msi") { # Check if MSI
-                    Write-Output "Running installer as MSI."
-                    Start-Process msiexec.exe -ArgumentList "/I ""$nestedInstaller"" $arguments" -Verb RunAs -Wait # Install MSI
-                } elseif ($nestedExtension -eq ".msix") { # Check if MSIX
-                    Write-Output "Running installer as MSIX."
-                    Add-AppPackage -Path $nestedInstaller # Install MSIX
+        Write-Output "Starting installation process for: $global:installer with arguments: $arguments"
+        if ($global:extension -eq ".exe") {
+            Write-Output "Running installer as EXE: $global:installer"
+            $process = Start-Process -FilePath $global:installer -ArgumentList $arguments -Verb RunAs -Wait -PassThru
+            Write-Output "Process Exit Code: $($process.ExitCode)"
+        } elseif ($global:extension -eq ".msi") {
+            Write-Output "Running installer as MSI: $global:installer"
+            $process = Start-Process msiexec.exe -ArgumentList "/I `"$global:installer`" $arguments" -Verb RunAs -Wait -PassThru
+            Write-Output "Process Exit Code: $($process.ExitCode)"
+        } elseif ($global:extension -eq ".msix") {
+            Write-Output "Running installer as MSIX: $global:installer"
+            Add-AppPackage -Path $global:installer # Install MSIX
+        } elseif ($global:extension -eq ".zip") {
+            Write-Output "Extracting ZIP: $global:installer"
+            Expand-Archive -LiteralPath $global:installer -DestinationPath $global:extractedPath -Force # Extract ZIP
+            if (Test-Path $global:extractedPath) {
+                if ($nestedInstallerFolderAndFile) {
+                    $nestedInstaller = "$global:extractedPath\$nestedInstallerFolderAndFile"
+                    if ($nestedExtension -eq ".exe") {
+                        Write-Output "Running nested installer as EXE: $nestedInstaller"
+                        Start-Process -FilePath $nestedInstaller -ArgumentList $arguments -Verb RunAs -Wait
+                    } elseif ($nestedExtension -eq ".msi") {
+                        Write-Output "Running nested installer as MSI: $nestedInstaller"
+                        Start-Process msiexec.exe -ArgumentList "/I `"$nestedInstaller`" $arguments" -Verb RunAs -Wait
+                    } elseif ($nestedExtension -eq ".msix") {
+                        Write-Output "Running nested installer as MSIX: $nestedInstaller"
+                        Add-AppPackage -Path $nestedInstaller
+                    }
                 }
             }
         }
         # Check if application is installed
         if (Test-Path $fileToCheck) {
-            # Exit with success code
             Write-Output "Successful installation."
-            Cleanup $installer $extractedPath
+            Cleanup $global:installer $global:extractedPath
             exit 0
         } else {
-            # Exit with error code
-            Write-Output "Installation failed."
-            Cleanup $installer $extractedPath
+            Write-Output "Installation failed: File check failed."
+            Cleanup $global:installer $global:extractedPath
             exit 1
         }
     } catch {
-        # Exit with error code
-        Write-Output "Installation failed."
-        Cleanup $installer $extractedPath
+        Write-Output "Installation failed with error: $_"
+        Cleanup $global:installer $global:extractedPath
         exit 1
     }
 } else {
-    # Exit with success code (since this is expected behavior)
-    Write-Output "$program already installed. Skipping installation."
+    Write-Output "$program already installed. Skipping download and installation."
     exit 0
+}
+
+function Cleanup($installer, $extractedPath) {
+    if ($downloadPath -match "^https?://" -or $downloadPath -match "^\\\\") {
+        Write-Output "Starting Cleanup."
+        Start-Sleep -Seconds 5
+        if ($installer) {
+            Remove-Item -Path $installer -Force
+        }
+        if (Test-Path $extractedPath) {
+            Remove-Item -Path $extractedPath -Recurse -Force
+        }
+        Write-Output "Finished Cleanup."
+    } else {
+        Write-Output "No cleanup needed for local paths."
+    }
 }
