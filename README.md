@@ -1,41 +1,74 @@
-This PowerShell script automates the process of downloading and installing software packages from the web. It supports various installer formats including EXE, MSI, MSIX, and ZIP. The script ensures that the application is installed before and after and performs cleanup operations after installation.
+# AnyAppInstaller
 
-#### Features:
-- **Dynamic URL Handling**: Automatically appends `download=1` to SharePoint URLs to facilitate direct downloads.
-- **Installer Download**: Downloads the installer from the specified URL if it does not already exist locally.
-- **Installation Support**: Supports installation of EXE, MSI, MSIX, and ZIP packages.
-- **ZIP Extraction**: Extracts ZIP files and runs the nested installer if specified.
-- **Cleanup**: Deletes the installer and extracted files after installation.
-- **Installation Check**: Verifies if the application is already installed to avoid redundant installations.
+**AnyAppInstaller** is a versatile PowerShell script designed to download, install, and manage the cleanup of software installers. It supports downloading from a URL, UNC path, or using a local path for EXE, MSI, MSIX, and ZIP files. The script handles silent installations and verifies the software installation afterward. Additionally, it can extract ZIP files and handle nested installers within them.
 
-#### Usage:
-1. **Set Variables**:
-    - `$program`: Name of the program.
-    - `$urlPath`: URL to the installer (EXE, MSI, MSIX, or ZIP).
-    - `$nestedInstallerFolderAndFile`: Path to the nested installer within the ZIP file (if applicable).
-    - `$arguments`: Arguments to pass to the installer.
-    - `$fileToCheck`: Path to a file that indicates the application is installed.
+## Features
+- Supports **EXE**, **MSI**, **MSIX**, and **ZIP** files.
+- Downloads installers from **URLs**, **UNC paths**, or uses **local paths**.
+- Verifies if the application is already installed before downloading to save bandwidth.
+- Silent installation with customizable arguments.
+- Automatic cleanup of downloaded or extracted files.
+- Logs key actions for transparency and troubleshooting.
 
-2. **Run the Script**:
-    - The script will create a temporary folder, download the installer, and execute the installation process based on the file type.
-    - If the application is already installed, the script will skip the installation.
+## Usage
+### Modify the following variables:
 
-#### Notes:
-- Ensure that PowerShell is run with administrative privileges to allow installation.
-- Modify the variables as needed to suit your specific installation requirements.
+1. **Program Name**: The name of the application you are installing.
+    ```powershell
+    $program = "7Zip"
+    ```
 
-This script simplifies the deployment of applications by automating the download and installation process, making it ideal for IT professionals and system administrators.
+2. **Installer Path (URL, UNC, or Local)**: Specify the path to the installer, which can be a URL, UNC path, or a local file path.
+    ```powershell
+    $downloadPath = "https://www.7-zip.org/a/7z2408-x64.msi"
+    ```
 
-# Onboarding - Offboarding - Intune - Assets - Reporting
+3. **Nested Installer Path (Optional for ZIPs)**: If the main installer is a ZIP file, specify the relative path of the installer inside the extracted folder.
+    ```powershell
+    $nestedInstallerFolderAndFile = ""
+    ```
 
-# THIS IS A WORK IN PROGRESS!!!
+4. **Installation Arguments**: Define any arguments to run the installer silently or with specific options.
+    ```powershell
+    $arguments = "/qn"
+    ```
 
-For documentation, please visit: [Onboarding - Offboarding - Intune - Assets - Reporting](https://xxxmtixxx.github.io/Onboarding-Offboarding-Intune-Assets-Reporting/)
+5. **File to Check if Installed**: Path to a file that verifies if the software is already installed. If the file exists, the installation will be skipped.
+    ```powershell
+    $fileToCheck = "C:\Program Files\7-Zip\7z.exe"
+    ```
 
-This is an evolving project, and there are multiple modules that work together, including:
+## How It Works
 
-## [OnboardingOffboardingForm](https://github.com/xxxmtixxx/OnboardingOffboardingForm)
+1. **Check for Installation**: The script first checks if the application is already installed by looking for the specified `$fileToCheck`. If found, it skips the download and installation steps.
 
-## [AnyAppInstaller](https://github.com/xxxmtixxx/AnyAppInstaller)
+2. **Download Installer**: If the application is not installed, it downloads the installer from the provided `$downloadPath` if it's a URL or UNC path.
 
-## [IntuneWin32App-MultiTenant](https://github.com/xxxmtixxx/IntuneWin32App-MultiTenant)
+3. **Install Application**:
+    - If the installer is an **EXE**, **MSI**, or **MSIX**, the script runs the installer with the provided arguments.
+    - If the installer is a **ZIP** file, the script extracts it, and if a nested installer is specified, it runs that installer.
+
+4. **Cleanup**: After installation, the script cleans up any downloaded or extracted files.
+
+## Example
+
+```powershell
+### Modify these Variables ###
+$program = "7Zip"
+$downloadPath = "https://www.7-zip.org/a/7z2408-x64.msi"
+$nestedInstallerFolderAndFile = ""
+$arguments = "/qn"
+$fileToCheck = "C:\Program Files\7-Zip\7z.exe"
+
+### Run the script ###
+```
+
+This will silently install **7Zip** from the provided URL, verify the installation, and perform cleanup afterward.
+
+## Notes
+- The script requires **PowerShell**.
+- For ZIP files, you may specify a nested installer path inside the archive for automatic execution.
+
+## Troubleshooting
+- **Log Outputs**: The script provides verbose output for every step, including downloading, installation, and cleanup. This helps identify where issues occur.
+- **Error Handling**: If the installation fails, the script will output the error message and exit.
