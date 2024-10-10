@@ -1,6 +1,6 @@
 # AnyAppInstaller
 
-**AnyAppInstaller** is a versatile PowerShell script designed to download, install, and manage the cleanup of software installers. It supports downloading from a URL, UNC path, or using a local path for EXE, MSI, MSIX, and ZIP files. The script handles silent installations and verifies the software installation afterward. Additionally, it can extract ZIP files and handle nested installers within them.
+**AnyAppInstaller** is a versatile PowerShell script designed to download, install, and manage the cleanup of software installers. It supports downloading from a URL, UNC path, or using a local path for EXE, MSI, MSIX, and ZIP files. The script handles silent installations, verifies the software installation, and includes features for ZIP extraction and nested installers.
 
 ## Features
 
@@ -28,22 +28,27 @@
     $downloadPath = "https://www.7-zip.org/a/7z2408-x64.exe"
     ```
 
-3. **Installation Arguments**: Define any arguments to run the installer silently or with specific options.
+3. **Nested Installer Path** (Optional for ZIPs): If the main installer is a ZIP file, specify the relative path of the installer inside the extracted folder.
+    ```powershell
+    $nestedInstallerFolderAndFile = "7Zip\Setup.exe"
+    ```
+
+4. **Installation Arguments**: Define any arguments to run the installer silently or with specific options.
     ```powershell
     $arguments = "/S"
     ```
 
-4. **File to Check if Installed**: Path to a file that verifies if the software is already installed. If the file exists, the installation will be skipped (unless `$allowUpdate` is set to `$true`).
+5. **File to Check if Installed**: Path to a file that verifies if the software is already installed. If the file exists, the installation will be skipped (unless `$allowUpdate` is set to `$true`).
     ```powershell
     $fileToCheck = "C:\Program Files\7-Zip\7z.exe"
     ```
 
-5. **Allow Update**: Set this variable to `$true` to force the installer to run even if the software is already installed. Set it to `$false` to skip the installation if the software is already present.
+6. **Allow Update**: Set this variable to `$true` to force the installer to run even if the software is already installed. Set it to `$false` to skip the installation if the software is already present.
     ```powershell
     $allowUpdate = $false
     ```
 
-6. **Prevent Cleanup on Failure**: Set this variable to `$true` to skip the cleanup of downloaded/extracted files if the installation fails, making it easier to retry the installation without downloading the installer again.
+7. **Prevent Cleanup on Failure**: Set this variable to `$true` to skip the cleanup of downloaded/extracted files if the installation fails, making it easier to retry the installation without downloading the installer again.
     ```powershell
     $preventCleanupOnFailure = $false
     ```
@@ -70,6 +75,7 @@
 ### Modify these Variables ###
 $program = "7Zip"
 $downloadPath = "https://www.7-zip.org/a/7z2408-x64.exe"
+$nestedInstallerFolderAndFile = "7Zip\Setup.exe" # If using ZIP, else leave empty
 $arguments = "/S"
 $fileToCheck = "C:\Program Files\7-Zip\7z.exe"
 $allowUpdate = $false
