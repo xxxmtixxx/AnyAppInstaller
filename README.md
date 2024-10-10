@@ -2,15 +2,14 @@
 
 **AnyAppInstaller** is a versatile PowerShell script designed to download, install, and manage the cleanup of software installers. It supports downloading from a URL, UNC path, or using a local path for EXE, MSI, MSIX, and ZIP files. The script handles silent installations and verifies the software installation afterward. Additionally, it can extract ZIP files and handle nested installers within them.
 
-## New Features
-- **File Name Extraction**: Automatically extracts the file name from URLs, including support for **SharePoint** links using the `Content-Disposition` header. This feature ensures correct file downloads even with query strings or complex SharePoint links.
-- **Prevent Cleanup on Failure**: A new option, `$preventCleanupOnFailure`, allows you to skip the cleanup of downloaded or extracted files if the installation fails, making it easier to retry with different arguments without re-downloading.
-- **SharePoint URL Support**: Detects SharePoint URLs and appends `"download=1"` to ensure correct handling of shared links for direct downloads.
+## Features
 
-## Existing Features
+- **File Name Extraction**: Automatically extracts the file name from URLs, including support for **SharePoint** links using the `Content-Disposition` header. This ensures correct file downloads even with query strings or complex links.
+- **Prevent Cleanup on Failure**: Option to skip cleanup of downloaded or extracted files if the installation fails, making it easier to retry with different arguments without re-downloading.
+- **SharePoint URL Support**: Automatically detects **SharePoint URLs** and appends `"download=1"` to ensure correct handling of shared links for direct downloads.
 - Supports **EXE**, **MSI**, **MSIX**, and **ZIP** files.
 - Downloads installers from **URLs**, **UNC paths**, or uses **local paths**.
-- **Allow Update**: Force an update by skipping the file check, even if the application is already installed.
+- **Allow Update**: Forces an update by skipping the file check, even if the application is already installed.
 - Verifies if the application is installed before downloading, saving bandwidth (unless forced to update).
 - Silent installation with customizable arguments.
 - Automatic cleanup of downloaded or extracted files, with the option to skip cleanup on failure.
