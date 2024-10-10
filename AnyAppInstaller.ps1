@@ -1,14 +1,16 @@
 ### Modify these Variables ###
 ### Program Name ###
-$program = ""
+$program = "7Zip"
 ### URL, UNC, or Local Path to EXE, MSI, MSIX, or ZIP ###
-$downloadPath = ""
+$downloadPath = "https://www.7-zip.org/a/7z2408-x64.exe"
 #### If ZIP, Must Specify Name of Sub-Folder\File After Extraction (Primary folder not required) ###
 $nestedInstallerFolderAndFile = ""
 #### Specify Arguments ###
-$arguments = ""
+$arguments = "/S"
 #### Specify File to Check if Installed ###
-$fileToCheck = ""
+$fileToCheck = "C:\Program Files\7-Zip\7z.exe"
+#### Skip File Check (True to force update. False to prevent it.) ###
+$skipFileCheck = $false
 
 ### Static Variables ###
 $global:installer = ""
@@ -57,8 +59,12 @@ function PrepareInstallerPath($path) {
 }
 
 ### Install Application ###
-if (!(Test-Path $fileToCheck)) { # Check if application is already installed
-    Write-Output "$program is not installed. Preparing to download and install."
+if ($skipFileCheck -or !(Test-Path $fileToCheck)) { # Check if application is installed or skip check
+    if ($skipFileCheck) {
+        Write-Output "Skipping file check and forcing update."
+    } else {
+        Write-Output "$program is not installed. Preparing to download and install."
+    }
 
     # Prepare installer based on path type
     PrepareInstallerPath $downloadPath
