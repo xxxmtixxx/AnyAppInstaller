@@ -5,7 +5,8 @@
 ## Features
 - Supports **EXE**, **MSI**, **MSIX**, and **ZIP** files.
 - Downloads installers from **URLs**, **UNC paths**, or uses **local paths**.
-- Verifies if the application is already installed before downloading to save bandwidth.
+- **Skip Installation Check**: Option to skip the local file check, forcing an update if needed.
+- Verifies if the application is already installed before downloading to save bandwidth (unless skip is enabled).
 - Silent installation with customizable arguments.
 - Automatic cleanup of downloaded or extracted files.
 - Logs key actions for transparency and troubleshooting.
@@ -33,16 +34,21 @@
     $arguments = "/qn"
     ```
 
-5. **File to Check if Installed**: Path to a file that verifies if the software is already installed. If the file exists, the installation will be skipped.
+5. **File to Check if Installed**: Path to a file that verifies if the software is already installed. If the file exists, the installation will be skipped (unless `skipFileCheck` is set to true).
     ```powershell
     $fileToCheck = "C:\Program Files\7-Zip\7z.exe"
     ```
 
+6. **Skip Installation Check**: Set this variable to `$true` to force the installer to run regardless of whether the software is already installed. Set it to `$false` to skip the installation if the software is already present.
+    ```powershell
+    $skipFileCheck = $false # Set to $true to force update
+    ```
+
 ## How It Works
 
-1. **Check for Installation**: The script first checks if the application is already installed by looking for the specified `$fileToCheck`. If found, it skips the download and installation steps.
+1. **Check for Installation**: The script first checks if the application is already installed by looking for the specified `$fileToCheck`. If found, it skips the download and installation steps unless `$skipFileCheck` is set to `$true`.
 
-2. **Download Installer**: If the application is not installed, it downloads the installer from the provided `$downloadPath` if it's a URL or UNC path.
+2. **Download Installer**: If the application is not installed or if the `skipFileCheck` variable is set to `$true`, it downloads the installer from the provided `$downloadPath` if it's a URL or UNC path.
 
 3. **Install Application**:
     - If the installer is an **EXE**, **MSI**, or **MSIX**, the script runs the installer with the provided arguments.
@@ -59,15 +65,17 @@ $downloadPath = "https://www.7-zip.org/a/7z2408-x64.msi"
 $nestedInstallerFolderAndFile = ""
 $arguments = "/qn"
 $fileToCheck = "C:\Program Files\7-Zip\7z.exe"
+$skipFileCheck = $false # Set to $true to force update
 
 ### Run the script ###
 ```
 
-This will silently install **7Zip** from the provided URL, verify the installation, and perform cleanup afterward.
+This will install **7Zip** from the provided URL, verify the installation, and perform cleanup afterward. If the application is already installed and `$skipFileCheck` is set to `$false`, the script will skip the installation.
 
 ## Notes
 - The script requires **PowerShell**.
 - For ZIP files, you may specify a nested installer path inside the archive for automatic execution.
+- Use the `$skipFileCheck` feature to force installation regardless of whether the application is already installed.
 
 ## Troubleshooting
 - **Log Outputs**: The script provides verbose output for every step, including downloading, installation, and cleanup. This helps identify where issues occur.
