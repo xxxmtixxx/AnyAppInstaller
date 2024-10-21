@@ -1,16 +1,28 @@
+---
+
 # AnyAppInstaller
 
-**AnyAppInstaller** is a versatile PowerShell script designed to download, install, and manage software installations. It supports downloading from a URL, UNC path, or using a local path for EXE, MSI, MSIX, and ZIP files. The script handles silent installations, verifies the software installation, and includes features for ZIP extraction and nested installers.
+**AnyAppInstaller** is a versatile PowerShell script designed to download, install, and manage software installations. It supports downloading from a URL, UNC path, or using a local path for EXE, MSI, MSIX, and ZIP files. The script handles silent installations, verifies the software installation, and includes features for ZIP extraction and nested installers. It is highly customizable, allowing users to run pre- and post-installation tasks, control logging behavior, and handle updates efficiently.
 
-## New Features
+## Key Features
 
+### Existing Features:
 - **File Name Extraction**: Automatically extracts the file name from URLs, including support for **SharePoint** links using the `Content-Disposition` header, ensuring accurate file downloads even with query strings or complex URLs.
-- **Prevent Cleanup on Failure**: You can now choose to skip cleanup of downloaded or extracted files if the installation fails, allowing for easier retries.
-- **Log File Options**: Control whether to append to or overwrite the installation log file, improving tracking and troubleshooting.
-- **Pre/Post-Installation Tasks**: You can specify tasks to run before and after the main installation (for example, running additional scripts or installers).
-- **Faster ZIP Extraction**: A faster ZIP extraction function has been added with a fallback to the default method if needed.
-- **Support for Various Installer Types**: Handles EXE, MSI, MSIX, and ZIP formats with silent installation options.
-- **SharePoint and Dropbox URL Support**: Automatically handles SharePoint and Dropbox URLs to facilitate proper downloading.
+- **Installer Types Supported**: Supports **EXE**, **MSI**, **MSIX**, and **ZIP** file formats.
+- **Silent Installation**: Customizable installation arguments allow for silent or interactive installations.
+- **Prevent Cleanup on Failure**: You can choose to skip cleanup of downloaded or extracted files if the installation fails, allowing for easier retries.
+- **Reboot Control**: Optionally allows or prevents reboots after the installation.
+- **Allow Update**: Forces an update by skipping the file check, even if the application is already installed.
+- **Installer Source Flexibility**: Supports downloading installers from **URLs**, **UNC paths**, or using **local paths**.
+- **Application Check**: Verifies if the application is installed before proceeding with the installation, saving bandwidth and time.
+- **Detailed Logging**: Logs key events and actions, including download, installation, and cleanup steps. Control over log appending or clearing is provided.
+
+### New Features:
+- **Pre/Post-Installation Tasks**: You can specify tasks to run before and after the main installation, such as additional scripts or configuration actions.
+- **Faster ZIP Extraction**: Includes a custom ZIP extraction function (`Expand-ArchiveFast`) for faster processing, with a fallback to the standard method if necessary.
+- **Dropbox URL Support**: Automatically detects Dropbox links and ensures correct downloading by modifying the query parameters (changing `dl=0` to `dl=1`).
+- **SharePoint URL Handling**: Automatically appends `"download=1"` to SharePoint links for seamless direct file downloads.
+- **Customizable Logging**: Control whether to append to an existing log file or overwrite it with each run for better tracking.
 
 ## Usage
 
@@ -63,8 +75,8 @@
 
 10. **Optional Pre-Installation Task**: If you need to run a pre-installation task (like an additional installer or setup script), define the file path and arguments.
     ```powershell
-    $preInstallFile = ""
-    $preInstallArguments = ""
+    $preInstallFile = "" # Not needed for this example
+    $preInstallArguments = "" 
     ```
 
 11. **Optional Post-Installation Task**: If you need to run a post-installation task, define the file path and arguments here. For example, you can set up configuration scripts or additional software after the main installation.
@@ -89,7 +101,7 @@ $allowReboot = $false
 $preventCleanupOnFailure = $false
 $allowLogAppend = $false
 $preInstallFile = "" # No pre-install tasks for this example
-$preInstallArguments = "" 
+$preInstallArguments = ""
 $postInstallFile = "C:\ConfigScripts\Configure7Zip.ps1" # Post-install script
 $postInstallArguments = "-ConfigureCompression -Silent"
 ```
@@ -108,10 +120,28 @@ $postInstallArguments = "-ConfigureCompression -Silent"
 
 5. **Cleanup**: After installation, the script cleans up any downloaded or extracted files unless the `$preventCleanupOnFailure` variable is set to `$true`.
 
-## Notes
-- The script requires **PowerShell**.
-- Use the `$allowUpdate` feature to force installation regardless of whether the application is already installed.
-- The post-install task feature allows additional customization steps to be executed after the main installation.
+### Example Post-Install Script (Configure7Zip.ps1)
+
+Here’s an example of a post-installation script that could be run after 7Zip is installed:
+
+```powershell
+param (
+    [switch]$ConfigureCompression,
+    [switch]$Silent
+)
+
+if ($ConfigureCompression) {
+    # Example of post-install task to configure 7Zip settings
+    Write-Host "Configuring 7Zip compression settings..."
+}
+
+if ($Silent) {
+    # Example of silent flag usage
+    Write-Host "Running in silent mode..."
+}
+
+# Add any additional configurations needed for 7Zip here
+```
 
 ## Troubleshooting
 - **Log Files**: All actions are logged to help identify any issues during the installation process.
